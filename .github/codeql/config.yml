@@ -2,7 +2,8 @@ name: "CodeQL Config"
 disable-default-queries: false
 queries:
   - uses: security-extended
-  - path: .github/codeql/queries
+  - uses: ./.github/codeql/queries
+
 paths:
   - UserApp/
 paths-ignore:

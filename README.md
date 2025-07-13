@@ -426,7 +426,7 @@ jobs:
 > **Copilot Prompt:**  
 > Modify the `.github/codeql/config.yml` for a .NET 8 project using CodeQL.  
 > - Enable the `security-extended` query suite.  
-> - Include support for custom queries in the `.github/codeql/queries` folder.  
+> - Use the custom queries in the `.github/codeql/queries` folder.  
 > - Set the source path to `UserApp/`.  
 > - Ignore test folders and generated code.  
 > - Use standard YAML formatting with proper indentation.
@@ -439,7 +439,8 @@ name: "CodeQL Config"
 disable-default-queries: false
 queries:
   - uses: security-extended
-  - path: .github/codeql/queries
+  - uses: ./.github/codeql/queries
+
 paths:
   - UserApp/
 paths-ignore:
