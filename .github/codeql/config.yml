@@ -1,0 +1,11 @@
+name: "CodeQL Config"
+disable-default-queries: false
+queries:
+  - uses: security-extended
+  - uses: ./queries
+paths:
+  - UserApp/
+paths-ignore:
+  - '**/test/**'
+  - '**/obj/**'
+  - '**/bin/**'

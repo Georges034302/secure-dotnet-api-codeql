@@ -1,0 +1,20 @@
+name: "Org-Wide CodeQL Policy"
+disable-default-queries: false
+queries:
+  - uses: org/codeql-queries@v1.0.0/csharp/security/FindHardcodedSecrets.ql
+  - uses: security-and-quality
+languages:
+  - csharp
+paths:
+  - '**/*.cs'
+rules:
+  - id: cs/hardcoded-secrets
+    severity: error
+    paths:
+      - 'UserApp/**/*.cs'
+    mode: block
+    message: |
+      ❌ Hardcoded secrets detected. Please:
+      1. Remove embedded credentials
+      2. Use environment variables or secrets config
+      3. Follow secure development best practices

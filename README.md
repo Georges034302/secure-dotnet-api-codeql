@@ -342,31 +342,69 @@ git push origin main
 
 ## ✅ Step 10: Enable Secret Scanning and Push Protection
 
-1. Go to **Settings > Code security and analysis** in GitHub.
-2. Enable:
-   - ✅ **Secret scanning**
-   - 🚦 **Push protection**
-   - 📊 **Dependency graph**
+> **Copilot Prompt:**  
+> Generate step-by-step instructions for enabling GitHub security features:  
+> - Enable Secret Scanning.  
+> - Enable Push Protection under Secret Scanning.  
+> - Enable the Dependency Graph.  
+> - Include optional steps for enabling these features organization-wide (GitHub Enterprise).  
+> Format the steps as clearly labeled bullet points.
+
+### **✅ Expected Outcome:**
+
+🔑 **Enable Secret Scanning**
+  - Go to your repository on GitHub.
+  - Click `Settings` in the top menu.
+  - In the left sidebar, select `Code security and analysis`.
+  - Find the **Secret scanning** section and toggle it on.
+
+🚦 **Enable Push Protection under Secret Scanning**
+  - In the same `Code security and analysis` page
+  - Locate **Push protection** under Secret scanning.
+  - Toggle **Push protection** on.
+
+📊 **Enable the Dependency Graph**
+  - Scroll to the **Dependency graph** section.
+  - Toggle the dependency graph on.
+
+🏢 **(Optional) Enable features organization-wide (GitHub Enterprise)**
+  - Go to your organization’s `Settings`.
+  - Select `Security & analysis` in the sidebar.
+  - Enable **Secret scanning** and **Push protection** for all repositories.
+  - Enable the **Dependency graph** for all repositories.
+  - Set enforcement policies as needed for
 
 ---
 
 ## ✅ Step 11: Add CodeQL Scan
 
-```yaml
-# .github/workflows/codeql.yml
+### 📄 Define `.github/workflows/codeql.yml`
+
+> **Copilot Prompt:**  
+> Create a GitHub Actions workflow for CodeQL `.github/workflows/codeql` analysis in a .NET 8 project.  
+> - The project is located in the `UserApp` folder.  
+> - Use `dotnet build` to compile `UserApp.csproj`.  
+> - Trigger the workflow on push and pull request to the `main` branch.  
+> - Enable permissions for `contents: read` and `security-events: write`.  
+> - Configure CodeQL to analyze C# and include a custom config file (`.github/codeql/config.yml`)  
+> - The config file should enable `security-extended` queries and support custom queries.
+
+### **✅ Expected Outcome:**  
+
+```yaml 
 name: CodeQL Scan
 on:
   push:
+    branches: [main]
     paths:
       - '**/*.cs'
-    branches: [main]
   pull_request:
+    branches: [main]
     paths:
       - '**/*.cs'
-    branches: [main]
 permissions:
-  security-events: write
   contents: read
+  security-events: write
 jobs:
   analyze:
     name: CodeQL Analyze C#
@@ -379,9 +417,53 @@ jobs:
       - uses: github/codeql-action/init@v3
         with:
           languages: csharp
-      - run: dotnet build --configuration Release
+          config-file: .github/codeql/config.yml
+      - run: dotnet build UserApp/UserApp.csproj --configuration Release
       - uses: github/codeql-action/analyze@v3
+
 ```
+
+### 🔎 Purpose of CodeQL
+
+- Analyzes source code for security vulnerabilities (e.g., injection, secrets)
+- Enables static analysis during CI to catch issues before merge
+- Supports built-in and custom security queries
+- Integrates with GitHub Security for inline PR feedback
+
+
+### 📄 Define `.github/codeql/config.yml`
+
+> **Copilot Prompt:**  
+> Modify the `.github/codeql/config.yml` for a .NET 8 project using CodeQL.  
+> - Enable the `security-extended` query suite.  
+> - Include support for custom queries in the `.github/codeql/queries` folder.  
+> - Set the source path to `UserApp/`.  
+> - Ignore test folders and generated code.  
+> - Use standard YAML formatting with proper indentation.
+
+
+### **✅ Expected Outcome:**  
+
+```yaml 
+name: "CodeQL Config"
+disable-default-queries: false
+queries:
+  - uses: security-extended
+  - uses: ./queries
+paths:
+  - UserApp/
+paths-ignore:
+  - '**/test/**'
+  - '**/obj/**'
+  - '**/bin/**'
+```
+### ⚙️ Purpose of `config.yml`
+
+- Customizes CodeQL behavior for your repo
+- Enables advanced query packs like `security-extended`
+- Includes your own custom queries (e.g., hardcoded secrets)
+- Scopes analysis to relevant folders (e.g., `UserApp/`)
+- Ignores noisy or irrelevant paths like `test/`, `obj/`, and `bin/`
 
 ---
 
@@ -398,12 +480,23 @@ jobs:
         └── FindHardcodedSecrets.ql
 ```
 
-📄 `FindHardcodedSecrets.ql`
+### 📄 Define `FindHardcodedSecrets.ql`
+
+> **Copilot Prompt:**  
+> Create a custom CodeQL query named `FindHardcodedSecrets.ql` for C# to detect hardcoded secrets.  
+> - Target fields that are initialized with string literals.  
+> - Match field names containing `apiKey`, `token`, `secret`, `password`, or `auth` (case-insensitive).  
+> - Match values that resemble secrets, such as those starting with `sk_`, `token_`, `apikey_`, or 32+ base64-like characters.  
+> - Use `Field` and `string_literal` from the `csharp` CodeQL library.  
+> - Return the matched string literal and a message indicating a hardcoded secret.  
+> - Include standard CodeQL metadata: `@name`, `@description`, `@id`, `@tags`, `@problem.severity`, and `@security-severity`.
+
+### **✅ Expected Outcome:** 
 
 ```ql
 /**
  * @name Find hardcoded secrets in C#
- * @description Detects hardcoded strings that look like secrets
+ * @description Detects hardcoded string literals assigned to fields with secret-related names
  * @kind problem
  * @problem.severity warning
  * @security-severity 8.0
@@ -413,58 +506,108 @@ jobs:
 
 import csharp
 
-from string_literal s
+predicate isSecretField(Field f) {
+  f.getName().regexpMatch("(?i).*(apiKey|token|secret|password|auth)")
+}
+
+predicate isSecretValue(string_literal s) {
+  s.getValue().regexpMatch("(?i)^(sk_.*|token_.*|apikey_.*|[a-zA-Z0-9+/=]{32,})")
+}
+
+from Field f, string_literal s
 where
-  s.getValue().regexpMatch("(?i).*(sk_.*|token_.*|apikey_.*|[a-zA-Z0-9+/=]{32,})")
-select s, "Hardcoded secret detected: '" + s.getValue() + "'"
+  isSecretField(f) and
+  f.getInitializer() = s and
+  isSecretValue(s)
+select s, "Hardcoded secret detected: '" + s.getValue() + "' assigned to field '" + f.getName() + "'"
+
 ```
 
-📄 `config.yml`
+### 🔍 Purpose of `FindHardcodedSecrets.ql` Query
 
-```yaml
-name: "CodeQL Config"
-disable-default-queries: false
-queries:
-  - uses: security-extended
-  - uses: .
-paths:
-  - '**/*.cs'
-paths-ignore:
-  - '**/test/**'
-```
+- Detects hardcoded secrets (API keys, tokens, passwords) in C# source code
+- Focuses on fields initialized with suspicious string literals
+- Helps identify security risks before code is merged
+- Complements GitHub Advanced Security with custom rules
+- Can be extended or reused across multiple projects
 
-📄 `qlpack.yml`
+### 📄 Define `qlpack.yml`
+
+> **Copilot Prompt:**  
+> Create a `qlpack.yml` file for a custom CodeQL query pack targeting C#.  
+> - Set the name to `userapp/secrets`.  
+> - Use version `0.0.1`.  
+> - Mark it as a library.  
+> - Add a dependency on `codeql/csharp-all`.
+
+### **✅ Expected Outcome:** 
 
 ```yaml
 name: userapp/secrets
 version: 0.0.1
+library: true
 dependencies:
   codeql/csharp-all: "*"
 ```
+### 📦 Purpose of `qlpack.yml`
+
+- Defines metadata for the custom query pack (name, version, type)
+- Declares dependencies needed to analyze C# code (`codeql/csharp-all`)
+- Allows CodeQL CLI and GitHub Actions to discover and run your custom query
+- Enables reuse and packaging of queries in other repositories
+- Required for integrating the query into `.github/codeql/config.yml`
 
 ---
 
 ## ✅ Step 13: Add Dependabot
 
+> **Copilot Prompt:**  
+> Create a `dependabot.yml` file to enable daily NuGet dependency updates for a .NET 8 project in the `UserApp` folder.  
+> - Limit open PRs to 5.  
+> - Add labels: `dependencies` and `automerge`.  
+> - Prefix commit messages with `📦 deps:`.
+
+### **✅ Expected Outcome:** 
+
 ```yaml
-# .github/dependabot.yml
 version: 2
 updates:
   - package-ecosystem: "nuget"
-    directory: "/"
+    directory: "/UserApp"
     schedule:
       interval: "daily"
     labels:
       - "dependencies"
       - "automerge"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "📦 deps:"
 ```
 
+### 🔄 Purpose of Dependabot 
+
+- Keeps NuGet dependencies in the `UserApp` project up to date
+- Automatically detects outdated or vulnerable packages
+- Opens pull requests with recommended updates
+- Reduces manual effort in dependency management
+- Helps maintain security posture with regular updates
+- Works seamlessly with GitHub Actions and `automerge` labels
+
+
 ---
 
 ## ✅ Step 14: Enforce Org-Wide CodeQL Policy *(Enterprise Only)*
+
+> **Copilot Prompt:**
+> - Create a CodeQL policy file at `.github/codeql/org-policy.yml`
+> - Enforce detection of hardcoded secrets in `UserApp/**/*.cs`
+> - Use custom query: `org/codeql-queries@v1.0.0/csharp/security/FindHardcodedSecrets.ql`
+> - Set severity to `error` and mode to `block`
+> - Add a message with secure development remediation steps
+
+
+
+### **✅ Expected Outcome:** 
 
 ```yaml
 # .github/codeql/org-policy.yml
@@ -490,9 +633,26 @@ rules:
       3. Follow secure development best practices
 ```
 
+### 🎯 Purpose of Org-Wide CodeQL Policy
+
+- ✅ Enforce **security standards** across all repositories in your GitHub organization
+- 🔍 Detect **hardcoded secrets** and other vulnerabilities using custom queries
+- 🚫 **Block pull requests** if violations are found, preventing insecure code merges
+- 🛡️ Centralize policy enforcement using a shared `.github/codeql/org-policy.yml` file
+- 📈 Improve **code quality** and reduce security risks at scale with automated analysis
+
 ---
 
 ## ✅ Step 15: Use GitHub Security Graph API *(Enterprise Only)*
+
+> **Copilot Prompt:**  
+> Write a GitHub GraphQL query to retrieve open vulnerability alerts for a .NET 8 repository.  
+> - Include NuGet package name, ecosystem, severity, advisory description, and GHSA ID.  
+> - Include file path (`vulnerableManifestPath`) and first patched version.  
+> - Add timestamps: `createdAt`, `updatedAt`, and `dismissedAt`.  
+> - Include external advisory references (CVE links).
+
+### **✅ Expected Outcome:** 
 
 ```graphql
 query VulnerabilityAlerts {
@@ -500,13 +660,28 @@ query VulnerabilityAlerts {
     vulnerabilityAlerts(first: 100, states: OPEN) {
       nodes {
         vulnerableManifestPath
+        createdAt
+        updatedAt
+        dismissedAt
         securityVulnerability {
           package {
             name
+            ecosystem
           }
           severity
           advisory {
             description
+            ghsaId
+            references {
+              url
+            }
+            identifiers {
+              type
+              value
+            }
+          }
+          firstPatchedVersion {
+            identifier
           }
         }
       }
@@ -514,6 +689,57 @@ query VulnerabilityAlerts {
   }
 }
 ```
+
+### 🧠 Purpose of GitHub Security Graph API in This Lab
+
+- Queries open security vulnerabilities in the repository's dependencies
+- Identifies affected NuGet packages declared in `.csproj` files
+- Provides metadata like severity, advisory details, and remediation version
+- Enables custom reporting, dashboards, or automation scripts
+- Useful for organization-wide security enforcement (GitHub Enterprise only)
+- Complements CodeQL and Dependabot by offering centralized vulnerability visibility
+
+### 🧪 Option A: Interactive via GitHub GraphQL Explorer
+
+1. **Open GraphQL Explorer**  
+   Navigate to [https://docs.github.com/en/graphql/overview/explorer](https://docs.github.com/en/graphql/overview/explorer)
+
+2. **Sign In with GitHub**  
+   Authenticate using a GitHub account that has access to the `UserApp` repository.
+
+3. **Copy and Paste the GraphQL Query**  
+   Ensure you replace placeholder values like `YOUR_ORG` and `UserApp` with actual values.
+
+4. **Click ▶ Run**  
+   Review the security vulnerability results returned by the query.
+
+### 🧪 Option B: Run Query via `curl` and GitHub Token
+
+1. **Create a Query File**  
+   Save your GraphQL query in a file (e.g., `.github/security/vulnerability-query.graphql`).
+
+2. **Generate a GitHub Personal Access Token (PAT)**  
+   Ensure it has these scopes:
+   - `read:org`
+   - `security_events`
+   - `read:packages`
+
+3. **Export Your Token** *(optional but recommended)*
+   ```bash
+   export GH_TOKEN=ghp_your_personal_access_token
+  
+4. **Execute the curl command**
+
+```bash
+curl -H "Authorization: bearer $GH_TOKEN" \
+     -H "Content-Type: application/json" \
+     -X POST \
+     --data-binary @<(jq -Rs '{query: .}' .github/security/vulnerability-query.graphql) \
+     https://api.github.com/graphql
+```
+
+5. View the JSON Response
+Inspect vulnerability alerts, severity, affected packages, and patch versions.
 
 ---
 

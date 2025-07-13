@@ -1,0 +1,5 @@
+name: userapp/secrets
+version: 0.0.1
+library: true
+dependencies:
+  codeql/csharp-all: "*"
