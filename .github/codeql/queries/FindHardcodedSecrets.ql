@@ -14,13 +14,14 @@ predicate isSecretField(Field f) {
   f.getName().regexpMatch("(?i).*(apiKey|token|secret|password|auth)")
 }
 
-predicate isSecretValue(string_literal s) {
-  s.getValue().regexpMatch("(?i)^(sk_.*|token_.*|apikey_.*|[a-zA-Z0-9+/=]{32,})")
+predicate isSecretValue(string value) {
+  value.regexpMatch("(?i)^(sk_.*|token_.*|apikey_.*|[a-zA-Z0-9+/=]{32,})")
 }
 
-from Field f, string_literal s
+from Field f, Expr::Literal lit
 where
   isSecretField(f) and
-  f.getInitializer() = s and
-  isSecretValue(s)
-select s, "Hardcoded secret detected: '" + s.getValue() + "' assigned to field '" + f.getName() + "'"
+  lit.getType().hasName("string") and
+  f.getInitializer() = lit and
+  isSecretValue(lit.getValue())
+select lit, "Hardcoded secret detected: '" + lit.getValue() + "' assigned to field '" + f.getName() + "'"
