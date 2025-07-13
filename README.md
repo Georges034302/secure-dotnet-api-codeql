@@ -478,7 +478,7 @@ paths-ignore:
 > - Target fields that are initialized with string literals.  
 > - Match field names containing `apiKey`, `token`, `secret`, `password`, or `auth` (case-insensitive).  
 > - Match values that resemble secrets, such as those starting with `sk_`, `token_`, `apikey_`, or 32+ base64-like characters.  
-> - Use `Field` and `string_literal` from the `csharp` CodeQL library.  
+> - Use `Field` and `Literal` from the `csharp` CodeQL library.  
 > - Return the matched string literal and a message indicating a hardcoded secret.  
 > - Include standard CodeQL metadata: `@name`, `@description`, `@id`, `@tags`, `@problem.severity`, and `@security-severity`.
 
@@ -506,9 +506,9 @@ predicate isSecretValue(string value) {
 }
 
 from Field f, Expr::Literal lit
+from Field f, StringLiteral lit
 where
   isSecretField(f) and
-  lit.getType().hasName("string") and
   f.getInitializer() = lit and
   isSecretValue(lit.getValue())
 select lit, "Hardcoded secret detected: '" + lit.getValue() + "' assigned to field '" + f.getName() + "'"

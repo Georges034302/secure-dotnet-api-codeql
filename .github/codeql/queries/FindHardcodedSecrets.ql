@@ -19,9 +19,9 @@ predicate isSecretValue(string value) {
 }
 
 from Field f, Expr::Literal lit
+from Field f, StringLiteral lit
 where
   isSecretField(f) and
-  lit.getType().hasName("string") and
   f.getInitializer() = lit and
   isSecretValue(lit.getValue())
 select lit, "Hardcoded secret detected: '" + lit.getValue() + "' assigned to field '" + f.getName() + "'"
