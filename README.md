@@ -486,38 +486,21 @@ paths-ignore:
 
 ```ql
 /**
- * @name Find hardcoded secrets in C#
- * @description Detects hardcoded string literals assigned to fields with secret-related names
+ * @name Hardcoded secrets in C# code
+ * @description Finds string literals that may contain hardcoded secrets.
  * @kind problem
  * @problem.severity warning
  * @security-severity 8.0
  * @id cs/hardcoded-secrets
- * @tags security
+ * @tags security, external/cwe/cwe-798
  */
 
 import csharp
 
-predicate isSecretField(Field f) {
-  f.getName().regexpMatch("(?i).*(apiKey|token|secret|password|auth)")
-}
-
-predicate isSecretValue(string value) {
-  value.regexpMatch("(?i)^(sk_.*|token_.*|apikey_.*|[a-zA-Z0-9+/=]{32,})")
-}
-
-from Field f, StringLiteral lit
+from StringLiteral s
 where
-  isSecretField(f) and
-  f.getInitializer() = lit and
-  isSecretValue(lit.getValue())
-select lit, "Hardcoded secret detected: '" + lit.getValue() + "' assigned to field '" + f.getName() + "'"
-from Field f, StringLiteral lit
-where
-  isSecretField(f) and
-  f.getInitializer() = lit and
-  isSecretValue(lit.getValue())
-select lit, "Hardcoded secret detected: '" + lit.getValue() + "' assigned to field '" + f.getName() + "'"
-
+  s.getValue().matchesRegex("(?i)(sk_[a-z0-9]{10,}|api[_-]?key|token|secret|[A-Za-z0-9+/=]{32,})")
+select s, "🔒 Possible hardcoded secret: '" + s.getValue() + "'"
 ```
 
 ### 🔍 Purpose of `FindHardcodedSecrets.ql` Query
