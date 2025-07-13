@@ -475,7 +475,7 @@ paths-ignore:
 
 > **Copilot Prompt:**  
 > Create a custom CodeQL query named `FindHardcodedSecrets.ql` for C# to detect hardcoded secrets.  
-> - Target fields that are initialized with string literals.  
+> - Target fields that are initialized with StringLiteral.  
 > - Match field names containing `apiKey`, `token`, `secret`, `password`, or `auth` (case-insensitive).  
 > - Match values that resemble secrets, such as those starting with `sk_`, `token_`, `apikey_`, or 32+ base64-like characters.  
 > - Use `Field` and `Literal` from the `csharp` CodeQL library.  
@@ -505,7 +505,12 @@ predicate isSecretValue(string value) {
   value.regexpMatch("(?i)^(sk_.*|token_.*|apikey_.*|[a-zA-Z0-9+/=]{32,})")
 }
 
-from Field f, Expr::Literal lit
+from Field f, StringLiteral lit
+where
+  isSecretField(f) and
+  f.getInitializer() = lit and
+  isSecretValue(lit.getValue())
+select lit, "Hardcoded secret detected: '" + lit.getValue() + "' assigned to field '" + f.getName() + "'"
 from Field f, StringLiteral lit
 where
   isSecretField(f) and
