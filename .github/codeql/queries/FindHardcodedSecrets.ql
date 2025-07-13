@@ -12,5 +12,5 @@ import csharp
 
 from StringLiteral s
 where
-  s.getValue().matchesRegex("(?i)(sk_[a-z0-9]{10,}|api[_-]?key|token|secret|[A-Za-z0-9+/=]{32,})")
+  s.getValue().regexpMatch("(?i)(sk_[a-z0-9]{10,}|api[_-]?key|token|secret|[A-Za-z0-9+/=]{32,})")
 select s, "🔒 Possible hardcoded secret: '" + s.getValue() + "'"
