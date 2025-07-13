@@ -745,6 +745,5 @@ Inspect vulnerability alerts, severity, affected packages, and patch versions.
 
 ---
 
-## 📄 End of Lab
-
-You have now secured, documented, and enforced a modern .NET 8 Web API with GitHub Copilot and GitHub Advanced Security!
+#### 🧑‍🏫 Author: Georges Bou Ghantous  
+<sub><i>This repository demonstrates secure coding practices for .NET 8 Web APIs using GitHub Copilot, CodeQL, Dependabot, and GitHub Advanced Security — with real-world workflows for secret protection, refactoring, and automated CI/CD.</i></sub>
