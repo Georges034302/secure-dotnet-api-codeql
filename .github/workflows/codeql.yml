@@ -2,12 +2,9 @@ name: CodeQL Scan
 on:
   push:
     branches: [main]
-    paths:
-      - '**/*.cs'
   pull_request:
     branches: [main]
-    paths:
-      - '**/*.cs'
+    
 permissions:
   contents: read
   security-events: write

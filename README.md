@@ -350,29 +350,21 @@ git push origin main
 > - Include optional steps for enabling these features organization-wide (GitHub Enterprise).  
 > Format the steps as clearly labeled bullet points.
 
-### **✅ Expected Outcome:**
+### **✅ Example Outcome:**
 
-🔑 **Enable Secret Scanning**
-  - Go to your repository on GitHub.
-  - Click `Settings` in the top menu.
-  - In the left sidebar, select `Code security and analysis`.
-  - Find the **Secret scanning** section and toggle it on.
+1. **Go to your repository → Settings → Security → Advanced Security**
 
-🚦 **Enable Push Protection under Secret Scanning**
-  - In the same `Code security and analysis` page
-  - Locate **Push protection** under Secret scanning.
-  - Toggle **Push protection** on.
+2. Enable the following:
+   - ✅ **Secret scanning**
+   - ✅ **Push protection**
+   - ✅ **Dependency graph**
+   - ✅ **Dependabot alerts**
+   - ✅ **Dependabot security updates**
+   - ✅ **Dependabot version updates**
+   - ✅ **Code scanning** (enable **CodeQL analysis** for C#)
+   - ✅ **Copilot Autofix** (optional, if CodeQL is set up)
 
-📊 **Enable the Dependency Graph**
-  - Scroll to the **Dependency graph** section.
-  - Toggle the dependency graph on.
-
-🏢 **(Optional) Enable features organization-wide (GitHub Enterprise)**
-  - Go to your organization’s `Settings`.
-  - Select `Security & analysis` in the sidebar.
-  - Enable **Secret scanning** and **Push protection** for all repositories.
-  - Enable the **Dependency graph** for all repositories.
-  - Set enforcement policies as needed for
+3. *(Optional)*: Enable **Private vulnerability reporting**
 
 ---
 
@@ -396,15 +388,13 @@ name: CodeQL Scan
 on:
   push:
     branches: [main]
-    paths:
-      - '**/*.cs'
   pull_request:
     branches: [main]
-    paths:
-      - '**/*.cs'
+
 permissions:
   contents: read
   security-events: write
+
 jobs:
   analyze:
     name: CodeQL Analyze C#
