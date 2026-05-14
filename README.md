@@ -745,5 +745,4 @@ Inspect vulnerability alerts, severity, affected packages, and patch versions.
 
 ---
 
-#### 🧑‍🏫 Author: Georges Bou Ghantous  
-<sub><i>This repository demonstrates secure coding practices for .NET 8 Web APIs using GitHub Copilot, CodeQL, Dependabot, and GitHub Advanced Security — with real-world workflows for secret protection, refactoring, and automated CI/CD.</i></sub>
+<sub><i><span style="color:#B0B0B0">👤 Author: Dr. Georges Bou Ghantous</span></i></sub>
